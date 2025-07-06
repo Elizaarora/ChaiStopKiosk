@@ -4,30 +4,35 @@ from firebase_admin import credentials, auth
 import json
 import streamlit as st
 
-# ✅ Initialize Firebase Admin SDK using Streamlit Secrets
+# ✅ Initialize Firebase only once
 if not firebase_admin._apps:
     firebase_config = json.loads(st.secrets["firebase_config"])
     cred = credentials.Certificate(firebase_config)
     firebase_admin.initialize_app(cred)
 
-# ✅ SIGNUP FUNCTION (creates user + email verification link)
+# ✅ SIGNUP FUNCTION
 def signup_user(email, password):
     try:
+        # Create user
         user = auth.create_user(email=email, password=password)
+        
+        # Generate verification link
         verification_link = auth.generate_email_verification_link(email)
-        st.success(f"User created successfully ✅\n\nPlease verify your email:\n{verification_link}")
+
+        # Show it directly in Streamlit
+        st.success("✅ User created successfully!")
+        st.info(f"🔗 Click the link below to verify your email:\n\n[{verification_link}]({verification_link})")
         return True
     except Exception as e:
-        st.error(f"Signup Error: {e}")
+        st.error(f"❌ Signup failed: {e}")
         return False
 
-# ✅ LOGIN FUNCTION (via Firebase REST API)
+# ✅ LOGIN FUNCTION (using Firebase REST API)
 def login_user(email, password):
     try:
-        # 🔑 Use your Web API key stored securely in Streamlit secrets
         api_key = st.secrets["firebase_web_api_key"]
-
         url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
+
         payload = {
             "email": email,
             "password": password,
@@ -38,15 +43,16 @@ def login_user(email, password):
         data = res.json()
 
         if "idToken" in data:
-            if not data.get("emailVerified", False):
-                st.warning("Please verify your email before logging in.")
+            # ✅ Logged in successfully
+            user_info = auth.get_user_by_email(email)
+            if not user_info.email_verified:
+                st.warning("⚠️ Please verify your email before logging in.")
                 return False
             return True
         else:
             error_msg = data.get("error", {}).get("message", "Unknown error")
-            st.error(f"Login failed: {error_msg}")
+            st.error(f"❌ Login failed: {error_msg}")
             return False
-
     except Exception as e:
-        st.error(f"Login error: {e}")
+        st.error(f"❌ Login error: {e}")
         return False
