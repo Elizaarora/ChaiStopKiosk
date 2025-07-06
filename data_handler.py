@@ -1,40 +1,35 @@
+# data_handler.py
 import firebase_admin
 from firebase_admin import firestore
 import streamlit as st
 
-# ✅ Initialize Firebase Firestore
 if not firebase_admin._apps:
     firebase_admin.initialize_app()
 
 db = firestore.client()
 
-# ✅ Save order to Firestore
-def save_order_to_firebase(user_email, summary):
+def save_order_to_firebase(user_email, order_data):
     try:
-        # Normalize email
-        summary["user_id"] = user_email.strip().lower()
-
-        # Save to Firestore
-        db.collection("orders").add(summary)
+        order = order_data.copy()
+        order["user_id"] = user_email.strip().lower()
+        db.collection("orders").add(order)
+        st.success("Order saved!")
         return True
     except Exception as e:
-        print("❌ Error saving order:", e)
+        st.error(f"Error saving order: {e}")
         return False
 
-# ✅ Fetch user's past orders
 def fetch_user_orders(user_email):
     try:
-        user_id = user_email.strip().lower()
+        uid = user_email.strip().lower()
         orders_ref = db.collection("orders") \
-            .where("user_id", "==", user_id) \
-            .order_by("timestamp", direction=firestore.Query.DESCENDING)
-
+            .where("user_id", "==", uid) \
+            .order_by("Time", direction=firestore.Query.DESCENDING)
         docs = orders_ref.stream()
-        orders = [doc.to_dict() for doc in docs]
-
-        print("📦 Orders fetched:", orders)
+        orders = [d.to_dict() for d in docs]
+        st.write("DEBUG orders list:", orders)
         return orders
     except Exception as e:
-        print("❌ Firestore query failed:", e)
-        st.info("📦 No past orders found (or index still being created).")
+        st.error("Unable to fetch orders (maybe missing index).")
+        st.write("DEBUG fetch error:", e)
         return []
