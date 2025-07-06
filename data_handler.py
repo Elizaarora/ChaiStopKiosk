@@ -1,39 +1,47 @@
-import streamlit as st
-import json
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import firestore
+import streamlit as st
 
-# ✅ Load from Streamlit secrets (NOT a file!)
+# ✅ Reuse existing Firebase app instance
 if not firebase_admin._apps:
-    firebase_config = json.loads(st.secrets["firebase_config"])
-    cred = credentials.Certificate(firebase_config)
-    firebase_admin.initialize_app(cred)
+    firebase_admin.initialize_app()
 
-# ✅ Firestore database client
+# ✅ Initialize Firestore DB
 db = firestore.client()
 
-# ------------------------------
-# Save Order to Firebase Firestore
-# ------------------------------
-def save_order_to_firebase(user_email, order_data):
+# ✅ Save an order to Firestore
+def save_order_to_firebase(user_id, chai_type, sweetness, milk_type, timestamp):
     try:
-        doc_ref = db.collection("orders").document()
-        doc_ref.set({
-            "email": user_email,
-            "order": order_data,
-            "timestamp": firestore.SERVER_TIMESTAMP
-        })
+        order_data = {
+            "user_id": user_id,
+            "chai_type": chai_type,
+            "sweetness": sweetness,
+            "milk_type": milk_type,
+            "timestamp": timestamp
+        }
+        db.collection("orders").add(order_data)
+        return True
     except Exception as e:
-        st.error(f"Error saving order: {e}")
+        print("❌ Error saving order:", e)
+        return False
 
-# ------------------------------
-# Fetch Order History
-# ------------------------------
-def fetch_user_orders(user_email):
+# ✅ Fetch past orders for a user (safe version)
+def fetch_user_orders(user_id):
     try:
-        orders_ref = db.collection("orders").where("email", "==", user_email).order_by("timestamp", direction=firestore.Query.DESCENDING)
-        orders = orders_ref.stream()
-        return [order.to_dict() for order in orders]
+        # This query needs a composite index: (user_id + timestamp)
+        orders_ref = db.collection("orders") \
+            .where("user_id", "==", user_id) \
+            .order_by("timestamp", direction=firestore.Query.DESCENDING)
+
+        docs = orders_ref.stream()
+        return [doc.to_dict() for doc in docs]
+
     except Exception as e:
-        st.error(f"Error fetching orders: {e}")
+        # Log actual error for developer
+        print("❌ Firestore query failed:", e)
+
+        # Show friendly info message to user
+        st.info("📦 No past orders found (or database index is still being created).")
+
+        # Return empty safely
         return []
