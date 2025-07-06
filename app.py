@@ -342,12 +342,12 @@ def show_signup():
     password = st.text_input("Password", type="password")
 
     if st.button("Register"):
-        msg = signup_user(email, password)
-        if "successfully" in msg:
-            st.success(msg)
-            st.session_state.page = "login"
+        success = signup_user(email, password)
+        if success:
+            st.success("User created successfully! ✅")
         else:
-            st.error(msg)
+            st.error("Signup failed. Please try again.")
+
 
     if st.button("Back to Login"):
         st.session_state.page = "login"
