@@ -1,36 +1,42 @@
+import requests
 import firebase_admin
 from firebase_admin import credentials, auth
 
-# Initialize Firebase only once
+# Initialize Firebase
 if not firebase_admin._apps:
     cred = credentials.Certificate("firebase_config.json")
     firebase_admin.initialize_app(cred)
 
-# ✅ SIGNUP FUNCTION
+# ✅ SIGNUP FUNCTION (same as before)
 def signup_user(email, password):
     try:
         user = auth.create_user(email=email, password=password)
-
-        # Generate verification email link
         verification_link = auth.generate_email_verification_link(email)
         print("✅ Email verification link:", verification_link)
-
         return f"User {email} created successfully! ✅\nPlease verify your email.\n\nLink: {verification_link}"
     except Exception as e:
         return str(e)
 
-# ✅ LOGIN FUNCTION
+# ✅ UPDATED LOGIN FUNCTION using Firebase REST API
 def login_user(email, password):
     try:
-        user = auth.get_user_by_email(email)
+        api_key = "AIzaSyCbpbHy4DSqXt1c9C9iBTvT7p5OxukNtgE"  # <-- Replace this with your actual Web API Key
+        url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
 
-        if not user.email_verified:
-            return False  # Email not verified
+        payload = {
+            "email": email,
+            "password": password,
+            "returnSecureToken": True
+        }
 
-        # ✅ Firebase Admin SDK can't check passwords directly!
-        # So we assume the email is valid and verified.
-        # Actual login (password check) is done via Firebase Client SDK in JS
-        return True
+        res = requests.post(url, json=payload)
+        data = res.json()
+
+        if "idToken" in data:
+            return True
+        else:
+            print("Login Error:", data.get("error", {}).get("message", "Unknown"))
+            return False
     except Exception as e:
         print("Login Error:", e)
         return False
