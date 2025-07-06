@@ -15,17 +15,20 @@ def signup_user(email, password):
     try:
         # Create user
         user = auth.create_user(email=email, password=password)
-        
+
         # Generate verification link
         verification_link = auth.generate_email_verification_link(email)
 
-        # Show it directly in Streamlit
+        # Show it on the screen
         st.success("✅ User created successfully!")
-        st.info(f"🔗 Click the link below to verify your email:\n\n[{verification_link}]({verification_link})")
+        st.warning("⚠️ You must verify your email before logging in.")
+        st.info(f"🔗 Click to verify your email: [Verify Email]({verification_link})")
+
         return True
     except Exception as e:
         st.error(f"❌ Signup failed: {e}")
         return False
+
 
 # ✅ LOGIN FUNCTION (using Firebase REST API)
 def login_user(email, password):
