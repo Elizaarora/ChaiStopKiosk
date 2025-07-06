@@ -295,18 +295,17 @@ def show_landing():
         </div>
     """, unsafe_allow_html=True)
 
-    # Corrected clickable Order Now button using st.button
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🫥 Order now", use_container_width=True):
             st.session_state.page = "login"
             st.rerun()
 
-    st.markdown("### 🥺 What are you feeling today?")
+    st.markdown("### 🥽 What are you feeling today?")
     suggestions = [
-        "🤪 Had a bad day? Have a kadak masala chai",
+        "🢪 Had a bad day? Have a kadak masala chai",
         "😡 Pissed off by the landlord? Have an adrak chai",
-        "🧐 Nervous about the presentation? Have Elaichi chai",
+        "🤨 Nervous about the presentation? Have Elaichi chai",
         "🤭 Still cannot figure out? Have Sulaimani chai",
     ]
     for s in suggestions:
@@ -325,7 +324,7 @@ def show_login():
     if st.button("Login"):
         if login_user(email, password):
             st.session_state.logged_in = True
-            st.session_state.user_email = email
+            st.session_state.user_email = email.strip().lower()
             st.session_state.page = "dashboard"
             st.rerun()
         else:
@@ -342,12 +341,11 @@ def show_signup():
     password = st.text_input("Password", type="password")
 
     if st.button("Register"):
-        success = signup_user(email, password)
+        success = signup_user(email.strip().lower(), password)
         if success:
             st.success("User created successfully! ✅")
         else:
             st.error("Signup failed. Please try again.")
-
 
     if st.button("Back to Login"):
         st.session_state.page = "login"
@@ -395,6 +393,7 @@ def show_order_page():
     if st.button("✅ Place Order"):
         token = random.randint(1000, 9999)
         summary = {
+            "user_id": st.session_state.user_email,
             "Name": name,
             "Contact": contact,
             "Base": base,
@@ -407,8 +406,7 @@ def show_order_page():
             "Special": special,
             "Payment": payment,
             "Token": token,
-            "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "Email": st.session_state.user_email
+            "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         save_order_to_firebase(st.session_state.user_email, summary)
         st.success(f"Your order token is #{token}")
@@ -417,7 +415,13 @@ def show_order_page():
 # ------------------ ORDER HISTORY ------------------
 def show_order_history():
     st.title("📅 Order History")
-    orders = fetch_user_orders(st.session_state.user_email)
+
+    email = st.session_state.user_email.strip().lower()
+    st.write("🔍 Logged in as:", email)
+
+    orders = fetch_user_orders(email)
+    st.write("📆 Orders fetched:", orders)
+
     if not orders:
         st.info("No past orders found.")
     else:

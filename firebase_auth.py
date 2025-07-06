@@ -4,36 +4,28 @@ from firebase_admin import credentials, auth
 import json
 import streamlit as st
 
-# ✅ Initialize Firebase only once
+# ✅ Initialize Firebase using secrets
 if not firebase_admin._apps:
     firebase_config = json.loads(st.secrets["firebase_config"])
     cred = credentials.Certificate(firebase_config)
     firebase_admin.initialize_app(cred)
 
-# ✅ SIGNUP FUNCTION
+# ✅ Sign up function
 def signup_user(email, password):
     try:
-        # Create user
+        email = email.strip().lower()
         user = auth.create_user(email=email, password=password)
-
-        # Generate verification link
         verification_link = auth.generate_email_verification_link(email)
-
-        # Show it on the screen
-        st.success("✅ User created successfully!")
-        st.warning("⚠️ You must verify your email before logging in.")
-        st.info(f"🔗 Click to verify your email: [Verify Email]({verification_link})")
-
-        return True
+        print("✅ Email verification link:", verification_link)
+        return f"User {email} created successfully! ✅\nPlease verify your email.\n\nLink: {verification_link}"
     except Exception as e:
-        st.error(f"❌ Signup failed: {e}")
-        return False
+        return str(e)
 
-
-# ✅ LOGIN FUNCTION (using Firebase REST API)
+# ✅ Login function using Firebase REST API
 def login_user(email, password):
     try:
-        api_key = st.secrets["firebase_web_api_key"]
+        email = email.strip().lower()
+        api_key = st.secrets["firebase_web_api_key"]  # ✅ stored in secrets
         url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
 
         payload = {
@@ -46,16 +38,13 @@ def login_user(email, password):
         data = res.json()
 
         if "idToken" in data:
-            # ✅ Logged in successfully
-            user_info = auth.get_user_by_email(email)
-            if not user_info.email_verified:
-                st.warning("⚠️ Please verify your email before logging in.")
+            if not data.get("emailVerified", False):
+                print("⚠️ Email not verified")
                 return False
             return True
         else:
-            error_msg = data.get("error", {}).get("message", "Unknown error")
-            st.error(f"❌ Login failed: {error_msg}")
+            print("Login Error:", data.get("error", {}).get("message", "Unknown"))
             return False
     except Exception as e:
-        st.error(f"❌ Login error: {e}")
+        print("Login Error:", e)
         return False
