@@ -26,29 +26,43 @@ st.markdown("""
     <style>
     html, body {
         background-color: #fff5e6;
+        margin: 0;
+        padding: 0;
     }
+
     .landing {
         background-color: #fff8ec;
         border-radius: 20px;
-        padding: 3rem;
-        margin: 2rem;
+        padding: 2rem;
+        margin: 1rem auto;
         text-align: center;
+        max-width: 90vw;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
+
     .heading {
-        font-size: 4rem;
+        font-size: 3.2rem;
         font-weight: 900;
         color: #2f1b0c;
+        margin-bottom: 0.5rem;
     }
+
     .sub-heading {
-        font-size: 3rem;
+        font-size: 2.5rem;
         color: #f4a300;
         font-weight: 800;
     }
+
     .desc {
         font-size: 1.1rem;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
         color: #6a4f3c;
+        max-width: 500px;
     }
+
     .custom-btn {
         background: linear-gradient(to right, #ffc371, #ff5f6d);
         border: none;
@@ -58,16 +72,42 @@ st.markdown("""
         font-weight: bold;
         font-size: 1.2rem;
     }
+
     .emoji-suggestion {
         background: #fff1da;
         border-radius: 12px;
         padding: 0.75rem;
-        font-size: 1.1rem;
+        font-size: 1rem;
         margin-bottom: 10px;
         color: #333;
+        max-width: 90%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    img {
+        max-width: 90%;
+        height: auto;
+        border-radius: 10px;
+        margin-top: 1rem;
+    }
+
+    @media screen and (max-width: 768px) {
+        .heading {
+            font-size: 2.5rem;
+        }
+
+        .sub-heading {
+            font-size: 2rem;
+        }
+
+        .desc {
+            font-size: 1rem;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
+
 
 # ------------------ LANDING PAGE ------------------
 def show_landing():
